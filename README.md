@@ -1,6 +1,8 @@
 # tanki
 16岁开始三年坦克游戏项目😘😘
 
+
+（须安装pygame和pywin32）
 新概念坦克
 1.点击屏幕发射
 2.q键切换mugnum,e键切换railgun
