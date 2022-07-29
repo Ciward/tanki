@@ -1,13 +1,37 @@
-import pygame
-import sys,os
-from pygame.locals import *
-import random
 import math
+import os
+import random
+import sys
 
+import pygame
+from pygame.locals import *
+import win32api
+import win32con
+
+for t in ['开发者：曦微(QQ2273805191)'+
+            '\n你想体验新风格的“坦克”吗？'+
+            '\n开发者不辞辛苦，不舍昼夜，'+
+            '\n牺牲宝贵的学习（娱乐）时间完成此项目q(≧▽≦q)，'+
+            '\n请尊重开发者的劳动成果，侵权必究！！'+
+            '\n偶尔BUG请谅解',
+          '以为这样就结束了?',
+          '你想白嫖吗？','不可能的呵呵呵','请给我一个吻进行解锁(●ˇ∀ˇ●)'+'\n没关系，隔着屏幕我也能感受到(❁´◡`❁)']:
+    re=win32api.MessageBox(0, t, "关于软件", win32con.MB_YESNO)
+if re!=6:
+    win32api.MessageBox(0,'你不想。那么白白了＞︿＜', "关于软件", win32con.MB_YESNO)
+    sys.exit()
+else:
+    win32api.MessageBox(0, '我相信你是个诚实的孩子', "关于软件", win32con.MB_YESNO)
+win32api.MessageBox(0, "爱你哦(≧∇≦)ﾉ", "关于开发者", win32con.MB_HELP)
+
+f=open('readme.txt')
+tex=f.read()
+win32api.MessageBox(0, tex, "操作方式", win32con.MB_ICONASTERISK)
 vect = pygame.Vector2
 class Gun(pygame.sprite.Sprite):
     def __init__(self,owner,drict_pos):
         pygame.sprite.Sprite.__init__(self)
+        self.maxtime = None
         self.owner=owner
         self.rect=self.image.get_rect(center=(self.owner.rect.centerx,self.owner.rect.centery))
         #self.x=owner.rect.centerx
@@ -81,6 +105,10 @@ class Gun(pygame.sprite.Sprite):
         pass
     def cheek(self):
         pass
+
+    def rand(self, power, range):
+        damage=random.randint(-range,range)
+        return power+damage
     def update(self,drict_pos,pos):
         if self.owner.still<=0:
             self.drict_pos=drict_pos        
@@ -193,8 +221,9 @@ class Gauss(Gun):
         self.ispre=False
         self.radangle=self.angle*math.pi/180
         x=self.rect.centerx+self.r*math.cos(self.radangle)
-        y=self.rect.centery+self.r*math.sin(self.radangle)      
-        Ebomb(self,x,y,self.angle,500,self.owner.bombpower*(0.25+0.75*self.p),self.blspeed)
+        y=self.rect.centery+self.r*math.sin(self.radangle)
+        pow=self.owner.bombpower*(0.25+0.75*self.p)
+        Ebomb(self,x,y,self.angle,500,self.rand(pow,int(pow*0.5)),self.blspeed)
         self.time=0
         self.pre_time=0
         self.p=self.pre_time/self.maxpre_time
@@ -229,9 +258,9 @@ class Ebomb(Bullet):
         self.R=200+400*self.p
         self.power=0
     def explode(self):
-        self.pos1 = vect(self.rect.centerx, self.rect.centery)   
+        self.pos1 = vect(self.rect.centerx, self.rect.centery)
         Eexplosion(self)
-        for e in game.enemies:            
+        for e in game.enemies:
             pos2=vect(e.rect.centerx, e.rect.centery)
             vec=pos2-self.pos1
             length=vec.length()
@@ -244,7 +273,7 @@ class Ebomb(Bullet):
                     Electric(self,((self.rect.centerx+e.rect.centerx)/2,(self.rect.centery+e.rect.centery)/2),
                              length,angle)
         self.kill()
-    def dirt(self):        
+    def dirt(self):
         birdDirt(self)
 class Electric(Dirt):
     def __init__(self,owner,pos,len,angle):
@@ -262,9 +291,9 @@ class Electric(Dirt):
         for img in self.originalimages:
             #original = img
             a=pygame.transform.smoothscale(img,(int(len),18))
-            
-            self.images.append(pygame.transform.rotate(a,-self.angle))        
-        
+
+            self.images.append(pygame.transform.rotate(a,-self.angle))
+
         self.image=self.images[self.index]
         self.rect=self.image.get_rect(center=pos)
     def update(self):
@@ -279,7 +308,7 @@ class Firegun(Gun):
     MINSPEED=40
     def __init__(self,owner,drict_pos):
         self.image=self.images[0]
-        super(Firegun,self).__init__(owner,drict_pos)    
+        super(Firegun,self).__init__(owner,drict_pos)
         self.maxtime=1
         self.speed=15
         self.oldspeed=self.speed
@@ -319,9 +348,9 @@ class Firegun(Gun):
         
         for i in self.anglelist:
             if self.owner.iscrazy:
-                Fire(self,x,y,i,self.firelive,self.owner.firepower*2,self.speed)
+                Fire(self,x,y,i,self.firelive,self.rand(self.owner.firepower*2,int(self.owner.firepower*2*0.5)),self.speed)
             else:
-                Fire(self,x,y,i,self.firelive,self.owner.firepower,self.speed)
+                Fire(self,x,y,i,self.firelive,self.rand(self.owner.firepower*2,int(self.owner.firepower*0.5)),self.speed)
         self.starcenter=(self.rect.centerx+self.star_r*math.cos(self.radangle),self.rect.centery+self.star_r*math.sin(self.radangle))        
         self.starimage= pygame.transform.rotate(self.originalstar, -self.angle)
         self.starrect=self.starimage.get_rect(center=self.starcenter)
@@ -346,7 +375,7 @@ class Magnum(Gun):
         self.radangle=self.angle*math.pi/180
         x=self.rect.centerx+self.r*math.cos(self.radangle)
         y=self.rect.centery+self.r*math.sin(self.radangle)
-        Bomb(self,x,y,self.angle,500,self.owner.bombpower,self.blspeed)
+        Bomb(self,x,y,self.angle,500,self.rand(self.owner.bombpower,int(self.owner.bombpower*0.5)),self.blspeed)
         self.time=0
 
 class Bomb(Bullet):
@@ -358,13 +387,14 @@ class Bomb(Bullet):
         self.kill()
     def dirt(self):        
         smallDirt(self)
-        
+
 class Meltgun(Gun):
     MINTIME=6
     MINSPEED=40
     def __init__(self,owner,drict_pos):
         super(Meltgun,self).__init__(owner,drict_pos)
         self.ispre=False
+        #self.average=sle.power
         if self.owner.isen:
             self.maxtime=self.owner.maxshootime
         else:
@@ -387,10 +417,12 @@ class Meltgun(Gun):
         x=self.rect.centerx+self.r*math.cos(self.radangle0)
         y=self.rect.centery+self.r*math.sin(self.radangle0)
         if self.owner.isen:
-            enShortlight(self,x,y,self.angle,self.bllive,self.owner.shortltpor,self.blspeed)
+            enShortlight(self,x,y,self.angle,self.bllive,self.rand(enShortlight.enpower,int(enShortlight.enpower*0.5)),self.blspeed)
         else:
-            Shortlight(self,x,y,self.angle,self.bllive,self.owner.shortltpor,self.blspeed)
+            Shortlight(self,x,y,self.angle,self.bllive,self.rand(self.owner.shortltpor,int(self.owner.shortltpor*0.5)),self.blspeed)
         self.time=0
+
+
 
 
 
@@ -399,7 +431,7 @@ class Shortlight(Bullet):
     def __init__(self,owner,x,y,angle,live,power,speed):
         self.image=random.choice(self.images)
         super(Shortlight,self).__init__(owner,x,y,angle,live,power,speed)
-            
+
     def explode(self):
         self.distory()
         self.kill()
@@ -449,9 +481,9 @@ class Railgun(Gun):
         x=self.rect.centerx+self.r*math.cos(self.radangle)
         y=self.rect.centery+self.r*math.sin(self.radangle)
         if type(self.owner)==Enemytank1:
-            enLight(self,x,y,self.angle,500,self.owner.ltpor,self.speed)
+            enLight(self,x,y,self.angle,500,enLight.enpower,self.speed)
         else:
-            Light(self,x,y,self.angle,500,0,self.speed)
+            Light(self,x,y,self.angle,500,self.owner.ltpor,self.speed)
         self.ispre=False
     def shoot(self):
         if self.owner.iscrazy:
@@ -465,10 +497,11 @@ class Light(Bullet):
     lightspeed=60
     def __init__(self,owner,x,y,angle,live,power,speed):
         self.image=random.choice(self.images)
-        super(Light,self).__init__(owner,x,y,angle,live,power,speed)              
+        super(Light,self).__init__(owner,x,y,angle,live,power,speed)
         self.target=None
         self.speed=self.lightspeed
-        self.power1=self.owner.owner.ltpor
+        self.power1=self.owner.rand(power,int(power*0.5))
+        self.power=0
     def explode(self):
         self.list=pygame.sprite.spritecollide(self,game.enemies,False)
         for i in self.list:
@@ -476,13 +509,24 @@ class Light(Bullet):
                 i.lightmark=self
                 i.hurt(self.power1)
 
-                
+
     def dirt(self):
         lightDirt(self,self.rect.centerx,self.rect.centery)
         self.oldcenter=self.rect.center
         self.rect.move_ip(30*math.cos(self.radangle),30*math.sin(self.radangle))
         lightDirt(self,self.rect.centerx,self.rect.centery)
         self.rect=self.image.get_rect(center=self.oldcenter)
+
+class enLight(Light):
+    enpower=30
+    def __init__(self,owner,x,y,angle,live,power,speed):
+        super(enLight,self).__init__(owner,x,y,angle,live,power,speed)
+        #pygame.sprite.Sprite.__init__(self,self.containers)
+        self.power=self.enpower
+    def explode(self):
+        self.power=0
+
+
 class lightDirt(Dirt):
     def __init__(self,owner,x,y):
         super(lightDirt,self).__init__(owner)
@@ -515,14 +559,7 @@ class Star(pygame.sprite.Sprite):
         screen.blit(self.image,self.rect)
 
 
-class enLight(Light):
-    enpower=30
-    def __init__(self,owner,x,y,angle,live,power,speed):
-        super(enLight,self).__init__(owner,x,y,angle,live,power,speed)
-        #pygame.sprite.Sprite.__init__(self,self.containers)
-        self.power=self.enpower
-    def explode(self):
-        self.power=0
+
 
 class birdDirt(Dirt):
     def __init__(self,owner):
@@ -666,7 +703,7 @@ class Enemy(Tank):
     def addlive(self,liv1):
         liv1=int(liv1)
         self.live+=liv1
-        Damage(liv1,(0,255,0),20,self.rect.center)
+        Text(liv1,(0,255,0),20,self.rect.center)
     def display(self):
         screen.blit(self.image,self.rect)
     
@@ -724,13 +761,13 @@ class Enemy0(Enemy):
         if power>0:
             self.live-=power        
             if self.live<=0:
-                Damage(int(power),(0,0,255),30,self.rect.center)
+                Damage(self,int(power))
                 if player.iscrazy:
                     self.distory(1,1,0,2)
                 else:
                     self.distory(1,1,2,2)
             else:
-                Damage(int(power),(180,180,180),25,self.rect.center)
+                Damage(self,int(power))
     def shoot(self):
         BulletCoordinate(self,self.rect.centerx,self.rect.centery,self.angle,50,10,15)
 class BulletCoordinate(Bullet):
@@ -787,15 +824,13 @@ class Enemytank0(Enemy):
             self.rect = self.image.get_rect(center=self.center)
     def hurt(self,power):
         if power>0:
-            self.live-=power        
-            if self.live<=0:
-                Damage(int(power),(0,0,255),30,self.rect.center)
+            self.live-=power
+            if self.live <= 0:
                 if player.iscrazy:
                     self.distory(1,1,0,2)
                 else:
                     self.distory(1,1,1,2)
-            else:
-                Damage(int(power),(180,180,180),25,self.rect.center)
+            Damage(self, int(power))
     def moveL(self):
         self.rotateit(-2)
     def moveR(self):
@@ -910,11 +945,11 @@ class Boss(Enemytank0):
     def hurt(self,power):
         self.live-=power        
         if self.live<=0:
-            Damage(int(power),(0,0,255),30,self.rect.center)
+            Damage(self,int(power))
             self.distory(10,1,2,2)
             game.winsound.play()
         else:
-            Damage(int(power),(180,180,180),25,self.rect.center)
+            Damage(self,int(power))
 
 class crazyBoss(Boss):
     maxshootime=40
@@ -964,7 +999,7 @@ class Player(Tank):
             self.center = self.rect.center            
             self.image = pygame.transform.rotate(self.original,-self.angle)            
             self.rect = self.image.get_rect(center=self.center)
-    def move(self):
+    def move0(self):
         
         self.radangle = self.angle * math.pi/180
         self.x_speed = self.speed * math.cos(self.radangle)
@@ -985,7 +1020,7 @@ class Player(Tank):
             self.rect.top = 0
         elif self.rect.bottom >= 700:
             self.rect.bottom = 700
-    def move0(self):
+    def move(self):
         if game.pressed_keys[K_UP] or game.pressed_keys[K_w]:
             self.num=0
             self.center=self.rect.center
@@ -1040,7 +1075,7 @@ class Player(Tank):
         if self.addscore>=10:
             for i in range(self.addscore//10):
                 self.level+=1
-                Damage('LEVEL UP!',(0,255,0),33,self.rect.center)
+                Text('LEVEL UP!',(0,255,0),33,self.rect.center)
                 self.oldscore=game.score
                 self.maxlive+=5
                 self.shortltpor+=1
@@ -1080,7 +1115,7 @@ class Player(Tank):
         if game.live>self.maxlive:
             game.live=self.maxlive
         else:
-            Damage(liv1,(0,255,0),30,self.rect.center)
+             Text(liv1,(0,255,0),30,self.rect.center)
     def defend(self):
         self.isdefend=True
         self.subnum=self.subnum*0.5
@@ -1139,7 +1174,7 @@ class Player(Tank):
         
         self.power=int(power)
         game.live-=self.power*self.subnum
-        Damage(self.power*self.subnum,(255,0,0),25,self.rect.center)
+        Damage(self,int(power))
     def distory(self):
        
         if game.live<=0:            
@@ -1173,10 +1208,11 @@ class Text(pygame.sprite.Sprite):
         textfont=pygame.font.SysFont(self.name,size) #创建文本对象，大小30
         self.image=textfont.render(str(num),True,color)
         self.rect = self.image.get_rect(center=center)
+    def change(self):
+        pass
     def update(self):
         self.rect.move_ip(0,-2)
-        self.alpha=self.live*6
-        self.image.set_alpha(self.alpha)
+        self.change()
         screen.blit(self.image,self.rect)
         if self.live>0:
             self.live-=1
@@ -1186,18 +1222,42 @@ class Text(pygame.sprite.Sprite):
 class Damage(Text):
     live=60
     name='arial'
-    def __init__(self,num,color,size,center):
-        super(Damage,self).__init__(num,color,size,center)
-        
-        
+    def __init__(self,owner,num):
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        #super(Damage,self).__init__(owner,num)
+        self.index=0
+        maxmsize=80
+        self.msize=maxmsize*num/owner.maxlive
+        if self.msize >maxmsize:
+            self.msize=maxmsize
+        elif self.msize<maxmsize*0.5:
+            self.msize=maxmsize*0.5
+        rate=self.msize/maxmsize
+        r=random.randint(0,255)
+        b=random.randint(0,255)
+        g=random.randint(0,255)
+        self.fontlist = [pygame.font.SysFont(self.name, i).render(str(num),True,(r,g,b))
+                        for i in range(int(self.msize),int(self.msize*0.3),-1)]
+        self.image = self.fontlist[self.index]
+        self.rect = self.image.get_rect(center=owner.rect.center)
+    def change(self):
+        if self.live%3==0:self.index+=1
+        if self.index>=len(self.fontlist)-1:self.index=len(self.fontlist)-1
+        self.image=self.fontlist[self.index]
+        self.rect = self.image.get_rect(center=self.rect.center)
+
+
+
 #pygame.mixer.init()
+'''
 if hasattr(sys, '_MEIPASS'):
 # PyInstaller会创建临时文件夹temp
 # 并把路径存储在_MEIPASS中
     main_dir = os.path.dirname(os.path.realpath(sys.executable))
 else:
     main_dir = os.path.split(os.path.abspath(__file__))[0]
-print(main_dir)
+'''
+main_dir = os.path.split(os.path.abspath(__file__))[0]
 def load_image(file):
     "loads an image, prepares it for play"
     file = os.path.join(main_dir, 'data', file)
