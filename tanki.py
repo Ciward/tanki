@@ -28,7 +28,8 @@ f=open('readme.txt')
 tex=f.read()
 win32api.MessageBox(0, tex, "操作方式", win32con.MB_ICONASTERISK)
 vect = pygame.Vector2
-class Gun(pygame.sprite.Sprite):
+
+class Gun(pygame.sprite.Sprite): #炮大类
     def __init__(self,owner,drict_pos):
         pygame.sprite.Sprite.__init__(self)
         self.maxtime = None
@@ -105,7 +106,6 @@ class Gun(pygame.sprite.Sprite):
         pass
     def cheek(self):
         pass
-
     def rand(self, power, range):
         damage=random.randint(-range,range)
         return power+damage
@@ -120,7 +120,7 @@ class Gun(pygame.sprite.Sprite):
             self.chk_shoot()
         screen.blit(self.image,self.rect)
         self.cheek()
-class Bullet(pygame.sprite.Sprite):
+class Bullet(pygame.sprite.Sprite): #子弹
     power=0
     def __init__(self,owner,x,y,angle,live,power,speed):
         pygame.sprite.Sprite.__init__(self, self.containers)
@@ -134,8 +134,7 @@ class Bullet(pygame.sprite.Sprite):
         self.original = self.image
         self.image= pygame.transform.rotate(self.original, -self.angle)         
         self.rect=self.image.get_rect(center=self.center)
-        
-        
+      
     def move(self):
         self.rect.move_ip(self.speed*math.cos(self.radangle),self.speed*math.sin(self.radangle))
         if self.rect.left <=0:
